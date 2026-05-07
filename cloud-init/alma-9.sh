@@ -9,13 +9,18 @@ IMG="AlmaLinux-9-GenericCloud-latest.x86_64.qcow2"
 TEMPLATE_NAME="alma-9-ai-cloudinit.template"
 STORAGE="data-pool"
 BRIDGE="vmbr0"
+WORK_DIR="${TEMPLATE_DIR:-/mnt/pve/cephfs/template}"
+SCRIPT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
+
+mkdir -p "$WORK_DIR"
+cd "$WORK_DIR"
 
 # Cleanup
 qm destroy $VMID 2>/dev/null || true
 rm -f "$IMG"
 
 # Download
-wget https://repo.almalinux.org/almalinux/9/cloud/x86_64/images/AlmaLinux-9-GenericCloud-latest.x86_64.qcow2
+wget -q https://repo.almalinux.org/almalinux/9/cloud/x86_64/images/AlmaLinux-9-GenericCloud-latest.x86_64.qcow2
 
 # Customize image
 virt-customize -a "$IMG" --run-command "echo timezone: Europe/Stockholm >> /etc/cloud/cloud.cfg"
@@ -26,14 +31,14 @@ virt-customize -a "$IMG" --install curl,git
 virt-customize -a "$IMG" --update
 
 # Install AI setup script
-virt-customize -a "$IMG" --copy-in ../ai-setup.sh:/usr/local/bin/
+virt-customize -a "$IMG" --copy-in "$SCRIPT_DIR/ai-setup.sh":/usr/local/bin/
 virt-customize -a "$IMG" --run-command "chmod +x /usr/local/bin/ai-setup.sh && ln -sf /usr/local/bin/ai-setup.sh /usr/local/bin/ai-setup"
-virt-customize -a "$IMG" --copy-in ../first-login.sh:/etc/profile.d/
+virt-customize -a "$IMG" --copy-in "$SCRIPT_DIR/first-login.sh":/etc/profile.d/
 virt-customize -a "$IMG" --run-command "mv /etc/profile.d/first-login.sh /etc/profile.d/99-ai-setup.sh && chmod +r /etc/profile.d/99-ai-setup.sh"
 
 # Create Proxmox VM template
 qm create $VMID --name "$TEMPLATE_NAME" --memory 1024 --cores 1 --net0 virtio,bridge=$BRIDGE
-qm importdisk $VMID "$IMG" $STORAGE
+qm importdisk $VMID "$WORK_DIR/$IMG" $STORAGE
 qm set $VMID --scsihw virtio-scsi-pci --scsi0 ${STORAGE}:vm-${VMID}-disk-0
 qm set $VMID --ide0 ${STORAGE}:cloudinit
 qm set $VMID --agent enabled=1
