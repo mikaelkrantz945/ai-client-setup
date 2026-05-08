@@ -19,10 +19,11 @@ cd "$WORK_DIR"
 qm destroy $VMID 2>/dev/null || true
 rm -f "$IMG"
 
-# Download
-wget -q https://repo.almalinux.org/almalinux/9/cloud/x86_64/images/AlmaLinux-9-GenericCloud-latest.x86_64.qcow2
+# Download from No-Ack mirror
+wget -q https://ftp.noack.cloud/almalinux/9/cloud/x86_64/images/AlmaLinux-9-GenericCloud-latest.x86_64.qcow2
 
-# Customize image
+# Customize image — use No-Ack mirror for packages
+virt-customize -a "$IMG" --run-command "sed -i 's|repo.almalinux.org|ftp.noack.cloud|g' /etc/yum.repos.d/almalinux*.repo"
 virt-customize -a "$IMG" --run-command "echo timezone: Europe/Stockholm >> /etc/cloud/cloud.cfg"
 virt-customize -a "$IMG" --install qemu-guest-agent
 virt-customize -a "$IMG" --install mtr

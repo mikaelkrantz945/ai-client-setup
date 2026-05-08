@@ -22,7 +22,8 @@ rm -f "$IMG"
 # Download
 wget -q https://cloud.debian.org/images/cloud/trixie/latest/debian-13-genericcloud-amd64.qcow2
 
-# Customize image
+# Customize image — use No-Ack mirror for packages
+virt-customize -a "$IMG" --run-command "sed -i 's|deb.debian.org|ftp.noack.cloud|g' /etc/apt/sources.list.d/*.sources 2>/dev/null; sed -i 's|deb.debian.org|ftp.noack.cloud|g' /etc/apt/sources.list 2>/dev/null; true"
 virt-customize -a "$IMG" --run-command "echo ssh_pwauth: 1 >> /etc/cloud/cloud.cfg"
 virt-customize -a "$IMG" --run-command "echo timezone: Europe/Stockholm >> /etc/cloud/cloud.cfg"
 virt-customize -a "$IMG" --install qemu-guest-agent

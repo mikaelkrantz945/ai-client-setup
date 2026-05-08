@@ -18,10 +18,11 @@ cd "$WORK_DIR"
 qm destroy $VMID 2>/dev/null || true
 rm -f "$IMG"
 
-# Download
-wget -q https://ftp.lysator.liu.se/pub/rocky/9.4/images/x86_64/Rocky-9-GenericCloud.latest.x86_64.qcow2
+# Download from No-Ack mirror
+wget -q https://ftp.noack.cloud/rocky/9/images/x86_64/Rocky-9-GenericCloud.latest.x86_64.qcow2
 
-# Customize image
+# Customize image — use No-Ack mirror for packages
+virt-customize -a "$IMG" --run-command "sed -i 's|dl.rockylinux.org/\$contentdir|ftp.noack.cloud/rocky|g' /etc/yum.repos.d/rocky*.repo"
 virt-customize -a "$IMG" --run-command "echo timezone: Europe/Stockholm >> /etc/cloud/cloud.cfg"
 virt-customize -a "$IMG" --install qemu-guest-agent
 virt-customize -a "$IMG" --install mtr

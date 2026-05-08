@@ -21,7 +21,8 @@ rm -f "$IMG"
 # Download
 wget -q https://cloud-images.ubuntu.com/noble/current/noble-server-cloudimg-amd64.img
 
-# Customize image
+# Customize image — use No-Ack mirror for packages
+virt-customize -a "$IMG" --run-command "sed -i 's|archive.ubuntu.com|ftp.noack.cloud|g; s|security.ubuntu.com|ftp.noack.cloud|g' /etc/apt/sources.list.d/*.sources 2>/dev/null; sed -i 's|archive.ubuntu.com|ftp.noack.cloud|g; s|security.ubuntu.com|ftp.noack.cloud|g' /etc/apt/sources.list 2>/dev/null; true"
 virt-customize -a "$IMG" --run-command "echo timezone: Europe/Stockholm >> /etc/cloud/cloud.cfg"
 virt-customize -a "$IMG" --install qemu-guest-agent
 virt-customize -a "$IMG" --install mtr
